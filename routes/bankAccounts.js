@@ -1,36 +1,14 @@
-// routes/bankAccounts.js
 const express = require("express");
 const router = express.Router();
 const admin = require("firebase-admin");
 const db = admin.firestore();
 const authenticateToken = require("../middleware/auth");
-const { ApiError, checkRoleAccess } = require("../utils/errorHandler");
+const { ApiError } = require("../utils/errorHandler");
 
 router.use(authenticateToken);
 
-const canAccessBankAccounts = (req, email) => {
-  const userRole = req.userData.role;
-  const userEmail = req.user.email.toLowerCase();
-  const targetEmail = email.toLowerCase();
-
-  if (userRole === "Owner" && userEmail !== targetEmail) {
-    throw new ApiError(
-      403,
-      "Forbidden: Owners can only access their own bank accounts"
-    );
-  }
-  if (["Vendor", "House Keeper"].includes(userRole)) {
-    throw new ApiError(
-      403,
-      "Forbidden: Vendors and House Keepers cannot access bank accounts"
-    );
-  }
-  // Managers and Administrators can access all bank accounts
-};
-
 router.get("/users/:email", async (req, res, next) => {
   try {
-    canAccessBankAccounts(req, req.params.email);
     const email = req.params.email.toLowerCase();
     const userRef = db.collection("users").doc(email);
     const doc = await userRef.get();
@@ -52,7 +30,6 @@ router.get("/users/:email", async (req, res, next) => {
 
 router.post("/users/:email", async (req, res, next) => {
   try {
-    canAccessBankAccounts(req, req.params.email);
     const email = req.params.email.toLowerCase();
     const userRef = db.collection("users").doc(email);
     const doc = await userRef.get();
@@ -75,14 +52,13 @@ router.post("/users/:email", async (req, res, next) => {
     next(
       error instanceof ApiError
         ? error
-        : new ApiError(500, "Failed to add bank account", error.message)
+        : new ApiError(500, "Failed to create bank account", error.message)
     );
   }
 });
 
 router.delete("/users/:email/:accountId", async (req, res, next) => {
   try {
-    canAccessBankAccounts(req, req.params.email);
     const email = req.params.email.toLowerCase();
     const accountId = req.params.accountId;
     const userRef = db.collection("users").doc(email);
