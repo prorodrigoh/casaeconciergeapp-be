@@ -2,10 +2,11 @@ const express = require("express");
 const admin = require("firebase-admin");
 const app = express();
 const port = process.env.PORT || 8080;
-
 const serviceAccount = require("./casaeconciergeapp-firebase-key.json");
+
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
+  databaseURL: "https://casaeconciergeapp.firebaseio.com",
 });
 
 app.use(express.json());

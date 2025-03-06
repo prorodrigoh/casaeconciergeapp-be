@@ -49,7 +49,7 @@ router.post("/", async (req, res, next) => {
 
     const userRef = db.collection("users").doc(email.toLowerCase());
     const userData = {
-      email: email.toLowerCase(), // Normalize to lowercase
+      email: email.toLowerCase(),
       userType,
       activeUser: !!activeUser,
       firstName: firstName || "",
@@ -61,7 +61,7 @@ router.post("/", async (req, res, next) => {
       cellPhoneBRA: cellPhoneBRA || "",
       cellPhoneUSA: cellPhoneUSA || "",
       whatsapp: whatsapp || "",
-      role: "Services", // Default role, can be overridden
+      role: "Services",
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 
@@ -108,6 +108,14 @@ router.post("/", async (req, res, next) => {
         });
       }
     }
+
+    // Create Firebase Authentication user with email and password
+    await admin.auth().createUser({
+      email: email.toLowerCase(),
+      password: password,
+      displayName: `${firstName} ${lastName}`.trim() || email.toLowerCase(),
+      disabled: !activeUser,
+    });
 
     res.status(201).send(`User ${email} registered`);
   } catch (error) {
