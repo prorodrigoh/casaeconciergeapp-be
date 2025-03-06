@@ -277,4 +277,21 @@ router.delete("/:email", async (req, res, next) => {
   }
 });
 
+router.post("/:email/reset-password", async (req, res, next) => {
+  try {
+    const email = req.params.email.toLowerCase();
+    const userRecord = await admin.auth().getUserByEmail(email);
+    if (!userRecord) throw new ApiError(404, "User not found");
+
+    await admin.auth().sendPasswordResetEmail(email);
+    res.status(200).send(`Password reset email sent to ${email}`);
+  } catch (error) {
+    next(
+      error instanceof ApiError
+        ? error
+        : new ApiError(500, "Failed to reset password", error.message)
+    );
+  }
+});
+
 module.exports = router;
