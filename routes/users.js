@@ -4,10 +4,12 @@ const admin = require("firebase-admin");
 const db = admin.firestore();
 const authenticateToken = require("../middleware/auth");
 const { ApiError } = require("../utils/errorHandler");
+const functions = require("../functions/node_modules/firebase-functions");
+const axios = require("axios");
+const nodemailer = require("nodemailer");
 
 router.use(authenticateToken);
 
-// Users Endpoints
 router.get("/", async (req, res, next) => {
   try {
     const snapshot = await db.collection("users").get();
@@ -37,6 +39,7 @@ router.post("/", async (req, res, next) => {
       creditCards,
     } = req.body;
     if (!email) throw new ApiError(400, "Email is required");
+    if (!password) throw new ApiError(400, "Password is required");
     const validUserTypes = [
       "owner",
       "guest",
@@ -109,7 +112,6 @@ router.post("/", async (req, res, next) => {
       }
     }
 
-    // Create Firebase Authentication user with email and password
     await admin.auth().createUser({
       email: email.toLowerCase(),
       password: password,
@@ -117,7 +119,7 @@ router.post("/", async (req, res, next) => {
       disabled: !activeUser,
     });
 
-    res.status(201).send(`User ${email} registered`);
+    res.status(201).send(`User ${email} created`);
   } catch (error) {
     next(
       error instanceof ApiError
@@ -129,11 +131,10 @@ router.post("/", async (req, res, next) => {
 
 router.get("/:email", async (req, res, next) => {
   try {
-    const email = req.params.email.toLowerCase(); // Normalize to lowercase
+    const email = req.params.email.toLowerCase();
     const userRef = db.collection("users").doc(email);
     const doc = await userRef.get();
     if (!doc.exists) {
-      // Try to find the user by querying the email field (case-insensitive)
       const snapshot = await db
         .collection("users")
         .where("email", "==", email)
@@ -283,7 +284,35 @@ router.post("/:email/reset-password", async (req, res, next) => {
     const userRecord = await admin.auth().getUserByEmail(email);
     if (!userRecord) throw new ApiError(404, "User not found");
 
-    await admin.auth().sendPasswordResetEmail(email);
+    // Configure nodemailer transporter (using Gmail as an example)
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    const actionCodeSettings = {
+      url: "https://casaeconciergeapp.firebaseapp.com",
+      handleCodeInApp: true,
+    };
+    const resetLink = await admin
+      .auth()
+      .generatePasswordResetLink(email, actionCodeSettings);
+
+    // Email content
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Password Reset Request",
+      text: `Click this link to reset your password: ${resetLink}`,
+      html: `<p>Click this link to reset your password: <a href="${resetLink}">${resetLink}</a></p>`,
+    };
+
+    // Send email
+    await transporter.sendMail(mailOptions);
+
     res.status(200).send(`Password reset email sent to ${email}`);
   } catch (error) {
     next(
