@@ -4,8 +4,6 @@ const admin = require("firebase-admin");
 const db = admin.firestore();
 const authenticateToken = require("../middleware/auth");
 const { ApiError } = require("../utils/errorHandler");
-const functions = require("../functions/node_modules/firebase-functions");
-const axios = require("axios");
 const nodemailer = require("nodemailer");
 
 router.use(authenticateToken);
@@ -37,6 +35,7 @@ router.post("/", async (req, res, next) => {
       address,
       bankAccounts,
       creditCards,
+      role,
     } = req.body;
     if (!email) throw new ApiError(400, "Email is required");
     if (!password) throw new ApiError(400, "Password is required");
@@ -49,6 +48,9 @@ router.post("/", async (req, res, next) => {
     ];
     if (!validUserTypes.includes(userType))
       throw new ApiError(400, "Invalid user type");
+    const validRoles = ["Administrator", "Finance", "Services"];
+    if (!role || !validRoles.includes(role))
+      throw new ApiError(400, "Invalid role");
 
     const userRef = db.collection("users").doc(email.toLowerCase());
     const userData = {
@@ -64,7 +66,7 @@ router.post("/", async (req, res, next) => {
       cellPhoneBRA: cellPhoneBRA || "",
       cellPhoneUSA: cellPhoneUSA || "",
       whatsapp: whatsapp || "",
-      role: "Services",
+      role, // Use the role from the request body
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 
@@ -223,6 +225,9 @@ router.put("/:email", async (req, res, next) => {
     ];
     if (userType && !validUserTypes.includes(userType))
       throw new ApiError(400, "Invalid user type");
+    const validRoles = ["Administrator", "Finance", "Services"];
+    if (role && !validRoles.includes(role))
+      throw new ApiError(400, "Invalid role");
 
     const updates = {
       userType: userType || doc.data().userType,
@@ -284,7 +289,6 @@ router.post("/:email/reset-password", async (req, res, next) => {
     const userRecord = await admin.auth().getUserByEmail(email);
     if (!userRecord) throw new ApiError(404, "User not found");
 
-    // Configure nodemailer transporter (using Gmail as an example)
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -301,7 +305,6 @@ router.post("/:email/reset-password", async (req, res, next) => {
       .auth()
       .generatePasswordResetLink(email, actionCodeSettings);
 
-    // Email content
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,
@@ -310,7 +313,6 @@ router.post("/:email/reset-password", async (req, res, next) => {
       html: `<p>Click this link to reset your password: <a href="${resetLink}">${resetLink}</a></p>`,
     };
 
-    // Send email
     await transporter.sendMail(mailOptions);
 
     res.status(200).send(`Password reset email sent to ${email}`);
