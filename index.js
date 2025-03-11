@@ -30,6 +30,8 @@ const propertiesRouter = require("./routes/properties");
 const servicesRouter = require("./routes/services");
 const bankAccountsRouter = require("./routes/bankAccounts");
 const creditCardsRouter = require("./routes/creditCards");
+const requestsRoutes = require("./routes/requests");
+const adminRoutes = require("./routes/admin");
 
 // Import error handler
 const errorHandler = require("./middleware/error");
@@ -40,6 +42,8 @@ app.use("/properties", propertiesRouter);
 app.use("/services", servicesRouter);
 app.use("/bankAccounts", bankAccountsRouter);
 app.use("/creditCards", creditCardsRouter);
+app.use("/requests", requestsRoutes);
+app.use("/admin", adminRoutes);
 
 // Global error handler
 app.use(errorHandler);
