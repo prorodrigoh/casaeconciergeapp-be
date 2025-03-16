@@ -23,7 +23,6 @@ router.post("/", async (req, res, next) => {
     const {
       email,
       password,
-      userType,
       activeUser,
       firstName,
       lastName,
@@ -39,23 +38,21 @@ router.post("/", async (req, res, next) => {
     } = req.body;
     if (!email) throw new ApiError(400, "Email is required");
     if (!password) throw new ApiError(400, "Password is required");
-    const validUserTypes = [
-      "owner",
-      "guest",
-      "manager",
+    const validRoles = [
+      "Admin",
+      "Owner",
+      "Guest",
+      "Manager",
       "House Keeper",
       "Vendor",
     ];
-    if (!validUserTypes.includes(userType))
-      throw new ApiError(400, "Invalid user type");
-    const validRoles = ["Administrator", "Finance", "Services"];
+
     if (!role || !validRoles.includes(role))
       throw new ApiError(400, "Invalid role");
 
     const userRef = db.collection("users").doc(email.toLowerCase());
     const userData = {
       email: email.toLowerCase(),
-      userType,
       activeUser: !!activeUser,
       firstName: firstName || "",
       lastName: lastName || "",
@@ -204,7 +201,6 @@ router.put("/:email", async (req, res, next) => {
     if (!doc.exists) throw new ApiError(404, "User not found");
 
     const {
-      userType,
       activeUser,
       firstName,
       lastName,
@@ -216,21 +212,19 @@ router.put("/:email", async (req, res, next) => {
       address,
       role,
     } = req.body;
-    const validUserTypes = [
-      "owner",
-      "guest",
-      "manager",
+    const validRoles = [
+      "Admin",
+      "Owner",
+      "Guest",
+      "Manager",
       "House Keeper",
       "Vendor",
     ];
-    if (userType && !validUserTypes.includes(userType))
-      throw new ApiError(400, "Invalid user type");
-    const validRoles = ["Administrator", "Finance", "Services"];
+
     if (role && !validRoles.includes(role))
       throw new ApiError(400, "Invalid role");
 
     const updates = {
-      userType: userType || doc.data().userType,
       activeUser:
         activeUser !== undefined ? !!activeUser : doc.data().activeUser,
       firstName: firstName || doc.data().firstName,
