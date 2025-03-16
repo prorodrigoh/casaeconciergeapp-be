@@ -36,8 +36,8 @@ router.get("/:id", authenticateToken, async (req, res) => {
 // Create a request
 router.post("/", authenticateToken, async (req, res) => {
   try {
-    const { userType, email } = req.user;
-    if (userType !== "Manager" && userType !== "Owner") {
+    const { role, email } = req.user;
+    if (role !== "Manager" && role !== "Owner" && role !== "Admin") {
       return res
         .status(403)
         .send("Only Managers and Owners can create requests");
@@ -60,13 +60,13 @@ router.post("/", authenticateToken, async (req, res) => {
 // Update a request
 router.put("/:id", authenticateToken, async (req, res) => {
   try {
-    const { userType, email } = req.user;
+    const { role, email } = req.user;
     const doc = await db.collection("requests").doc(req.params.id).get();
     if (!doc.exists) {
       return res.status(404).send("Request not found");
     }
     const requestData = doc.data();
-    if (userType !== "Manager" && requestData.createdBy !== email) {
+    if (role !== "Manager" && requestData.createdBy !== email) {
       return res.status(403).send("You can only edit your own requests");
     }
 

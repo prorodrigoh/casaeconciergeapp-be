@@ -29,8 +29,8 @@ router.get("/categories", authenticateToken, async (req, res) => {
 // Create a category
 router.post("/categories", authenticateToken, async (req, res) => {
   try {
-    if (req.user.userType !== "Administrator") {
-      return res.status(403).send("Only Administrators can manage categories");
+    if (req.user.role !== "Admin") {
+      return res.status(403).send("Only Admins can manage categories");
     }
     const { name } = req.body;
     const docRef = await db.collection("categories").add({ name });
@@ -43,8 +43,8 @@ router.post("/categories", authenticateToken, async (req, res) => {
 // Update a category
 router.put("/categories/:id", authenticateToken, async (req, res) => {
   try {
-    if (req.user.userType !== "Administrator") {
-      return res.status(403).send("Only Administrators can manage categories");
+    if (req.user.role !== "Admin") {
+      return res.status(403).send("Only Admins can manage categories");
     }
     const { name } = req.body;
     await db.collection("categories").doc(req.params.id).update({ name });
@@ -57,8 +57,8 @@ router.put("/categories/:id", authenticateToken, async (req, res) => {
 // Delete a category
 router.delete("/categories/:id", authenticateToken, async (req, res) => {
   try {
-    if (req.user.userType !== "Administrator") {
-      return res.status(403).send("Only Administrators can manage categories");
+    if (req.user.role !== "Admin") {
+      return res.status(403).send("Only Admins can manage categories");
     }
     await db.collection("categories").doc(req.params.id).delete();
     res.status(200).send("Category deleted");
@@ -70,8 +70,8 @@ router.delete("/categories/:id", authenticateToken, async (req, res) => {
 // Create a service
 router.post("/services", authenticateToken, async (req, res) => {
   try {
-    if (req.user.userType !== "Administrator") {
-      return res.status(403).send("Only Administrators can manage services");
+    if (req.user.role !== "Admin") {
+      return res.status(403).send("Only Admins can manage services");
     }
     const { category, name } = req.body;
     const docRef = await db.collection("services").add({ category, name });
@@ -84,8 +84,8 @@ router.post("/services", authenticateToken, async (req, res) => {
 // Update a service
 router.put("/services/:id", authenticateToken, async (req, res) => {
   try {
-    if (req.user.userType !== "Administrator") {
-      return res.status(403).send("Only Administrators can manage services");
+    if (req.user.role !== "Admin") {
+      return res.status(403).send("Only Admins can manage services");
     }
     const { name } = req.body;
     await db.collection("services").doc(req.params.id).update({ name });
@@ -101,8 +101,8 @@ router.delete(
   authenticateToken,
   async (req, res) => {
     try {
-      if (req.user.userType !== "Administrator") {
-        return res.status(403).send("Only Administrators can manage services");
+      if (req.user.role !== "Admin") {
+        return res.status(403).send("Only Admins can manage services");
       }
       await db.collection("services").doc(req.params.id).delete();
       res.status(200).send("Service deleted");
