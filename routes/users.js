@@ -118,6 +118,8 @@ router.post("/", async (req, res, next) => {
       disabled: !activeUser,
     });
 
+    await admin.auth().setCustomUserClaims(user.uid, { role });
+
     res.status(201).send(`User ${email} created`);
   } catch (error) {
     next(
@@ -254,6 +256,10 @@ router.put("/:email", async (req, res, next) => {
           },
           { merge: true }
         );
+    }
+    if (role) {
+      const user = await admin.auth().getUserByEmail(email);
+      await admin.auth().setCustomUserClaims(user.uid, { role });
     }
 
     res.send(`User ${email} updated`);
