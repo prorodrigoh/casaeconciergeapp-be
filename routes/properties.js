@@ -22,14 +22,28 @@ router.get("/", async (req, res, next) => {
 
 router.post("/", async (req, res, next) => {
   try {
-    const { name, address } = req.body;
-    if (!name) throw new ApiError(400, "Name is required");
+    const { buildingName, unit, address, layout } = req.body;
+    if (!buildingName) throw new ApiError(400, "Building name is required");
+
     const propertyRef = db.collection("properties").doc();
     const propertyData = {
-      name,
-      address: address || "",
+      buildingName,
+      unit: unit || null,
+      address: {
+        street: address.street || "",
+        city: address.city || "",
+        state: address.state || "",
+        zipCode: address.zipCode || "",
+      },
+      layout: {
+        bedrooms: layout.bedrooms || 0,
+        bathrooms: layout.bathrooms || 0,
+        parkingSpots: layout.parkingSpots || 0,
+        parkingSpotNumber: layout.parkingSpotNumber || null,
+      },
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     };
+
     await propertyRef.set(propertyData);
     res.status(201).send({ id: propertyRef.id, ...propertyData });
   } catch (error) {
@@ -44,12 +58,29 @@ router.post("/", async (req, res, next) => {
 router.put("/:id", async (req, res, next) => {
   try {
     const id = req.params.id;
-    const { name, address } = req.body;
-    if (!name) throw new ApiError(400, "Name is required");
+    const { buildingName, unit, address, layout } = req.body;
+    if (!buildingName) throw new ApiError(400, "Building name is required");
+
     const propertyRef = db.collection("properties").doc(id);
-    const updates = { name, address };
+    const updates = {
+      buildingName,
+      unit: unit || null,
+      address: {
+        street: address.street || "",
+        city: address.city || "",
+        state: address.state || "",
+        zipCode: address.zipCode || "",
+      },
+      layout: {
+        bedrooms: layout.bedrooms || 0,
+        bathrooms: layout.bathrooms || 0,
+        parkingSpots: layout.parkingSpots || 0,
+        parkingSpotNumber: layout.parkingSpotNumber || null,
+      },
+    };
+
     await propertyRef.update(updates);
-    res.send(`Property ${id} updated`);
+    res.send({ id, ...updates });
   } catch (error) {
     next(
       error instanceof ApiError
